@@ -30,6 +30,7 @@
         .brand-container {
             text-align: center;
             margin-bottom: 20px;
+            cursor: pointer; /* ให้รู้ว่ากดได้ */
         }
 
         .brand-name {
@@ -40,6 +41,7 @@
             text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
             margin: 0;
             text-transform: uppercase;
+            user-select: none;
         }
 
         .status-container {
@@ -83,12 +85,22 @@
 
         .stat-item { text-align: center; }
         .stat-label { display: block; font-size: 0.7rem; color: #666; margin-bottom: 5px; }
-        .stat-value { color: var(--neon-blue); font-size: 1.1rem; font-weight: bold; }
+        .stat-value { color: var(--neon-blue); font-size: 1.1rem; font-weight: bold; width: 80px; display: inline-block; }
+
+        .hint {
+            position: absolute;
+            top: 20px;
+            color: #444;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="brand-container">
+    <div class="hint">CLICK THE NAME TO TOGGLE OFFLINE MODE</div>
+
+    <div class="brand-container" onclick="toggleOffline()">
         <h1 class="brand-name">KimVPS</h1>
         <div class="status-container" id="status-box">
             <div class="pulse-dot" id="dot"></div>
@@ -116,9 +128,11 @@
     </div>
 
     <script>
-        // ข้อมูลใหม่ของคุณ
         const OWNER = 'kimdev-source';
         const REPO = 'Vps';
+
+        let isManualOffline = false;
+        let lastActionStartTime = null;
 
         const cpuEl = document.getElementById('cpu');
         const ramEl = document.getElementById('ram');
@@ -127,9 +141,23 @@
         const statusText = document.getElementById('status-text');
         const dot = document.getElementById('dot');
 
+        // ฟังก์ชัน Toggle Offline (เมื่อกดที่ชื่อ KimVPS)
+        function toggleOffline() {
+            isManualOffline = !isManualOffline;
+            if (isManualOffline) {
+                setTheme("OFFLINE", "var(--neon-red)");
+                cpuEl.innerText = "0%";
+                ramEl.innerText = "0.0 GB";
+                netEl.innerText = "0.0 KB/s";
+            } else {
+                updateDashboard(); // กลับไปเช็คสถานะจริงจาก GitHub
+            }
+        }
+
         async function updateDashboard() {
+            if (isManualOffline) return;
+
             try {
-                // ดึงข้อมูลผ่าน Public API (ไม่ต้องใช้ Token)
                 const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/runs?per_page=1`);
                 const data = await res.json();
                 const run = data.workflow_runs[0];
@@ -139,32 +167,20 @@
                     return;
                 }
 
-                // ตรวจสอบสถานะการรัน
+                lastActionStartTime = new Date(run.created_at);
+                
                 const isRunning = run.status === "in_progress" || run.status === "queued";
                 const isSuccess = run.conclusion === "success";
 
                 if (isRunning) {
                     setTheme("DEPLOYING...", "var(--neon-orange)");
-                    animateValues(true);
                 } else if (isSuccess) {
                     setTheme("SYSTEM ONLINE", "var(--neon-blue)");
-                    animateValues(false);
                 } else {
                     setTheme("ACTION FAILED", "var(--neon-red)");
-                    animateValues(false);
                 }
-
-                // คำนวณ Uptime จริงจากจุดเริ่มต้นของ Run ล่าสุด
-                const startTime = new Date(run.created_at);
-                const now = new Date();
-                const diff = Math.floor((now - startTime) / 1000);
-                const h = Math.floor(diff / 3600);
-                const m = Math.floor((diff % 3600) / 60);
-                const s = diff % 60;
-                uptimeEl.innerText = `${h}H ${m}M ${s}S`;
-
             } catch (err) {
-                statusText.innerText = "OFFLINE";
+                if (!isManualOffline) statusText.innerText = "CONN ERROR";
             }
         }
 
@@ -175,8 +191,24 @@
             dot.style.boxShadow = `0 0 15px ${color}`;
         }
 
-        function animateValues(isBusy) {
-            // จำลองตัวเลขให้ขยับตามสถานะจริง
+        // ฟังก์ชันทำให้เวลาเดิน (Live Clock)
+        function tickUptime() {
+            if (isManualOffline || !lastActionStartTime) return;
+
+            const now = new Date();
+            const diff = Math.floor((now - lastActionStartTime) / 1000);
+            
+            const h = Math.floor(diff / 3600);
+            const m = Math.floor((diff % 3600) / 60);
+            const s = diff % 60;
+            
+            uptimeEl.innerText = `${h}H ${m}M ${s}S`;
+        }
+
+        function animateValues() {
+            if (isManualOffline) return;
+
+            const isBusy = statusText.innerText.includes("DEPLOYING");
             const cpu = isBusy ? Math.floor(Math.random() * 25) + 65 : Math.floor(Math.random() * 10) + 2;
             const ram = isBusy ? (Math.random() * (4.2 - 3.0) + 3.0).toFixed(1) : (Math.random() * (1.1 - 0.7) + 0.7).toFixed(1);
             const net = isBusy ? (Math.random() * 2500).toFixed(1) : (Math.random() * 15).toFixed(1);
@@ -186,13 +218,10 @@
             netEl.innerText = `${net} KB/s`;
         }
 
-        // อัปเดตสถานะจาก GitHub ทุก 20 วินาที
-        setInterval(updateDashboard, 20000);
-        // ให้ตัวเลขขยับหลอกๆ ทุก 2 วินาที (ใช้สถานะล่าสุดมาอ้างอิง)
-        setInterval(() => {
-            const isBusy = statusText.innerText.includes("DEPLOYING");
-            animateValues(isBusy);
-        }, 2000);
+        // Interval ต่างๆ
+        setInterval(updateDashboard, 15000); // เช็ค GitHub ทุก 15 วินาที
+        setInterval(tickUptime, 1000);        // ให้เวลาเดินทุก 1 วินาที
+        setInterval(animateValues, 2000);     // สุ่มตัวเลขทุก 2 วินาที
 
         updateDashboard();
     </script>

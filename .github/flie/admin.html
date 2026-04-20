@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KimVPS | Management & Tutorial</title>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-orange: #ffaa00;
+            --neon-red: #ff4444;
+            --dark-bg: #050505;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #001a33 0%, #050505 80%);
+        }
+
+        /* Brand & Status */
+        .brand-container {
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .brand-container:hover { transform: scale(1.02); }
+
+        .brand-name {
+            font-size: 5rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+            margin: 0;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            letter-spacing: 2px;
+            font-family: monospace;
+        }
+
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Stats Overlay */
+        .stats-overlay {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            gap: 60px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px 50px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 210, 255, 0.1);
+        }
+
+        .stat-item { text-align: center; }
+        .stat-label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 8px; letter-spacing: 1px; }
+        .stat-value { color: var(--neon-blue); font-size: 1.3rem; font-weight: bold; min-width: 100px; display: inline-block; }
+
+        /* Modals (Admin & Tutorial) */
+        .modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 15, 0.98);
+            border: 1px solid var(--neon-blue);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            text-align: center;
+            display: none;
+            z-index: 100;
+            max-width: 400px;
+        }
+
+        .overlay-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            z-index: 99;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: monospace;
+            transition: 0.3s;
+        }
+        .btn:hover { background: var(--neon-blue); color: #000; }
+        .btn-red { border-color: var(--neon-red); color: var(--neon-red); }
+        .btn-red:hover { background: var(--neon-red); color: #fff; }
+
+        /* Help Icon */
+        .help-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #444;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: #444;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .help-icon:hover { color: var(--neon-blue); border-color: var(--neon-blue); }
+    </style>
+</head>
+<body>
+
+    <div class="help-icon" onclick="openModal('tutorial-modal')">?</div>
+
+    <div id="admin-modal" class="modal">
+        <h3 style="color: var(--neon-blue); margin-top: 0;">ADMIN CONTROL</h3>
+        <button class="btn" onclick="setMode('auto')">AUTO (GITHUB)</button>
+        <button class="btn" onclick="setMode('online')">FORCE ONLINE</button>
+        <button class="btn btn-red" onclick="setMode('offline')">FORCE OFFLINE</button>
+        <hr style="border: 0.5px solid #222; margin: 20px 0;">
+        <button class="btn" style="border-color: #555; color: #555;" onclick="closeModals()">CLOSE</button>
+    </div>
+
+    <div id="tutorial-modal" class="modal">
+        <h3 style="color: var(--neon-blue); margin-top: 0;">HOW TO USE</h3>
+        <p style="text-align: left; font-size: 0.9rem; line-height: 1.6;">
+            🔵 <b>Online:</b> ระบบทำงานปกติ<br>
+            🟠 <b>Deploying:</b> กำลังอัปเดตโค้ดจาก GitHub<br>
+            🔴 <b>Offline/Failed:</b> ระบบหยุดทำงานหรือเกิดข้อผิดพลาด<br><br>
+            🖱️ <b>Admin:</b> คลิกที่ชื่อ <b>"KimVPS"</b> เพื่อเปิดเมนูควบคุมลับ
+        </p>
+        <button class="btn" onclick="closeModals()">UNDERSTOOD</button>
+    </div>
+
+    <div class="overlay-bg" id="overlay" onclick="closeModals()"></div>
+
+    <div class="brand-container" onclick="openModal('admin-modal')">
+        <h1 class="brand-name">KimVPS</h1>
+        <div class="status-container">
+            <div class="pulse-dot" id="dot"></div>
+            <span id="status-text">SYNCING...</span>
+        </div>
+    </div>
+
+    <div class="stats-overlay">
+        <div class="stat-item"><span class="stat-label">CPU LOAD</span><span class="stat-value" id="cpu">0%</span></div>
+        <div class="stat-item"><span class="stat-label">RAM USAGE</span><span class="stat-value" id="ram">0.0 GB</span></div>
+        <div class="stat-item"><span class="stat-label">NETWORK</span><span class="stat-value" id="net">0.0 KB/s</span></div>
+    </div>
+
+    <script>
+        const OWNER = 'kimdev-source', REPO = 'Vps';
+        let mode = 'auto'; // auto, online, offline
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function setMode(m) {
+            mode = m;
+            if(m === 'offline') {
+                updateUI("OFFLINE", "var(--neon-red)");
+                document.getElementById('cpu').innerText = "0%";
+                document.getElementById('ram').innerText = "0.0 GB";
+                document.getElementById('net').innerText = "0.0 KB/s";
+            } else if(m === 'online') {
+                updateUI("FORCE ONLINE", "var(--neon-blue)");
+            }
+            closeModals();
+            if(m !== 'offline') updateDashboard();
+        }
+
+        async function updateDashboard() {
+            if(mode === 'offline' || mode === 'online') return;
+            try {
+                const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/actions/runs?per_page=1`);
+                const data = await res.json();
+                const run = data.workflow_runs[0];
+                if(!run) return;
+
+                if(run.status === "in_progress") updateUI("DEPLOYING...", "var(--neon-orange)");
+                else if(run.conclusion === "success") updateUI("SYSTEM ONLINE", "var(--neon-blue)");
+                else updateUI("ACTION FAILED", "var(--neon-red)");
+            } catch(e) { updateUI("CONN ERROR", "var(--neon-red)"); }
+        }
+
+        function updateUI(txt, col) {
+            const st = document.getElementById('status-text');
+            const dt = document.getElementById('dot');
+            st.innerText = txt; st.style.color = col;
+            dt.style.backgroundColor = col; dt.style.boxShadow = `0 0 15px ${col}`;
+        }
+
+        setInterval(() => {
+            if(mode === 'offline') return;
+            const isBusy = document.getElementById('status-text').innerText.includes("DEPLOYING");
+            document.getElementById('cpu').innerText = (isBusy ? Math.floor(Math.random()*30)+60 : Math.floor(Math.random()*10)+2) + "%";
+            document.getElementById('ram').innerText = (isBusy ? (Math.random()*1.5+3).toFixed(1) : (Math.random()*0.5+0.7).toFixed(1)) + " GB";
+            document.getElementById('net').innerText = (isBusy ? (Math.random()*2000).toFixed(1) : (Math.random()*15).toFixed(1)) + " KB/s";
+        }, 2000);
+
+        setInterval(updateDashboard, 15000);
+        updateDashboard();
+    </script>
+</body>
+</html>

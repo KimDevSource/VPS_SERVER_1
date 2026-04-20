@@ -30,7 +30,7 @@
         .brand-container {
             text-align: center;
             margin-bottom: 20px;
-            cursor: pointer; /* ให้รู้ว่ากดได้ */
+            cursor: pointer;
         }
 
         .brand-name {
@@ -74,23 +74,23 @@
             position: absolute;
             bottom: 40px;
             display: flex;
-            gap: 50px;
+            gap: 60px; /* เพิ่มระยะห่างให้ดูสมดุล */
             font-family: monospace;
             background: rgba(255, 255, 255, 0.03);
-            padding: 15px 40px;
+            padding: 20px 50px;
             border-radius: 50px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 210, 255, 0.1);
         }
 
         .stat-item { text-align: center; }
-        .stat-label { display: block; font-size: 0.7rem; color: #666; margin-bottom: 5px; }
-        .stat-value { color: var(--neon-blue); font-size: 1.1rem; font-weight: bold; width: 80px; display: inline-block; }
+        .stat-label { display: block; font-size: 0.75rem; color: #666; margin-bottom: 8px; letter-spacing: 1px; }
+        .stat-value { color: var(--neon-blue); font-size: 1.3rem; font-weight: bold; min-width: 100px; display: inline-block; }
 
         .hint {
             position: absolute;
             top: 20px;
-            color: #444;
+            color: #333;
             font-size: 0.7rem;
             letter-spacing: 1px;
         }
@@ -110,20 +110,16 @@
 
     <div class="stats-overlay">
         <div class="stat-item">
-            <span class="stat-label">CPU USAGE</span>
+            <span class="stat-label">CPU LOAD</span>
             <span class="stat-value" id="cpu">0%</span>
         </div>
         <div class="stat-item">
-            <span class="stat-label">MEMORY</span>
+            <span class="stat-label">RAM USAGE</span>
             <span class="stat-value" id="ram">0.0 GB</span>
         </div>
         <div class="stat-item">
-            <span class="stat-label">NETWORK</span>
+            <span class="stat-label">NETWORK TRAFFIC</span>
             <span class="stat-value" id="net">0.0 KB/s</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">UPTIME</span>
-            <span class="stat-value" id="uptime">0H 0M 0S</span>
         </div>
     </div>
 
@@ -132,16 +128,13 @@
         const REPO = 'Vps';
 
         let isManualOffline = false;
-        let lastActionStartTime = null;
 
         const cpuEl = document.getElementById('cpu');
         const ramEl = document.getElementById('ram');
         const netEl = document.getElementById('net');
-        const uptimeEl = document.getElementById('uptime');
         const statusText = document.getElementById('status-text');
         const dot = document.getElementById('dot');
 
-        // ฟังก์ชัน Toggle Offline (เมื่อกดที่ชื่อ KimVPS)
         function toggleOffline() {
             isManualOffline = !isManualOffline;
             if (isManualOffline) {
@@ -150,7 +143,7 @@
                 ramEl.innerText = "0.0 GB";
                 netEl.innerText = "0.0 KB/s";
             } else {
-                updateDashboard(); // กลับไปเช็คสถานะจริงจาก GitHub
+                updateDashboard();
             }
         }
 
@@ -166,8 +159,6 @@
                     statusText.innerText = "NO ACTIONS FOUND";
                     return;
                 }
-
-                lastActionStartTime = new Date(run.created_at);
                 
                 const isRunning = run.status === "in_progress" || run.status === "queued";
                 const isSuccess = run.conclusion === "success";
@@ -191,37 +182,24 @@
             dot.style.boxShadow = `0 0 15px ${color}`;
         }
 
-        // ฟังก์ชันทำให้เวลาเดิน (Live Clock)
-        function tickUptime() {
-            if (isManualOffline || !lastActionStartTime) return;
-
-            const now = new Date();
-            const diff = Math.floor((now - lastActionStartTime) / 1000);
-            
-            const h = Math.floor(diff / 3600);
-            const m = Math.floor((diff % 3600) / 60);
-            const s = diff % 60;
-            
-            uptimeEl.innerText = `${h}H ${m}M ${s}S`;
-        }
-
         function animateValues() {
             if (isManualOffline) return;
 
             const isBusy = statusText.innerText.includes("DEPLOYING");
-            const cpu = isBusy ? Math.floor(Math.random() * 25) + 65 : Math.floor(Math.random() * 10) + 2;
-            const ram = isBusy ? (Math.random() * (4.2 - 3.0) + 3.0).toFixed(1) : (Math.random() * (1.1 - 0.7) + 0.7).toFixed(1);
-            const net = isBusy ? (Math.random() * 2500).toFixed(1) : (Math.random() * 15).toFixed(1);
+            // สุ่มค่าให้ดู Real-time
+            const cpu = isBusy ? Math.floor(Math.random() * 30) + 60 : Math.floor(Math.random() * 8) + 2;
+            const ram = isBusy ? (Math.random() * (4.5 - 3.0) + 3.0).toFixed(1) : (Math.random() * (1.2 - 0.6) + 0.6).toFixed(1);
+            const net = isBusy ? (Math.random() * 3500).toFixed(1) : (Math.random() * 20).toFixed(1);
 
             cpuEl.innerText = `${cpu}%`;
             ramEl.innerText = `${ram} GB`;
             netEl.innerText = `${net} KB/s`;
         }
 
-        // Interval ต่างๆ
-        setInterval(updateDashboard, 15000); // เช็ค GitHub ทุก 15 วินาที
-        setInterval(tickUptime, 1000);        // ให้เวลาเดินทุก 1 วินาที
-        setInterval(animateValues, 2000);     // สุ่มตัวเลขทุก 2 วินาที
+        // เช็ค GitHub ทุก 20 วินาที
+        setInterval(updateDashboard, 20000);
+        // ตัวเลขขยับทุก 2 วินาที
+        setInterval(animateValues, 2000);
 
         updateDashboard();
     </script>

@@ -12,4 +12,9 @@ Free Web Page VPS Online / Offline
 
 Free All
 
+| Version | Supported          |
+| ------- | ------------------ |
+| Windows 11   | :white_check_mark: 
+| Windows 10   | :white_check_mark:             
+
 By KimTeamWork

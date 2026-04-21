@@ -147,7 +147,7 @@
                 const dt = document.getElementById('dot');
 
                 if (run.status === "in_progress" || run.status === "queued") {
-                    st.innerText = "DEPLOYING...";
+                    st.innerText = "CHECK DEPLOYING...";
                     st.style.color = "var(--neon-orange)";
                     dt.style.backgroundColor = "var(--neon-orange)";
                     dt.style.boxShadow = "0 0 15px var(--neon-orange)";
@@ -157,10 +157,10 @@
                     dt.style.backgroundColor = "var(--neon-blue)";
                     dt.style.boxShadow = "0 0 15px var(--neon-blue)";
                 } else {
-                    st.innerText = "ACTION FAILED";
-                    st.style.color = "var(--neon-red)";
-                    dt.style.backgroundColor = "var(--neon-red)";
-                    dt.style.boxShadow = "0 0 15px var(--neon-red)";
+                    st.innerText = "SYSTEM ONLINE";
+                    st.style.color = "var(--neon-blue)";
+                    dt.style.backgroundColor = "var(--neon-blue)";
+                    dt.style.boxShadow = "0 0 15px var(--neon-blue)";
                 }
             } catch (e) {
                 document.getElementById('status-text').innerText = "API ERROR";
